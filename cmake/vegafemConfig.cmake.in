@@ -5,9 +5,9 @@ include(CMakeFindDependencyMacro)
 
 # Same syntax as find_package
 find_dependency(OpenGL REQUIRED)
+find_dependency(MKL REQUIRED)
 find_dependency(GLUT REQUIRED)
 find_dependency(GLEW REQUIRED)
-find_dependency(MKL REQUIRED)
 
 # Any extra setup
 
