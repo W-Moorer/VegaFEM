@@ -25,6 +25,257 @@ If you just need the utilities, the simplest is to download the binaries in the 
 * As well as the following dependencies: `intel-mkl opengl glui glew cgal openblas eigen3` which can be obtained via [vcpkg](https://vcpkg.io/en/index.html)
 * CMake 3.21
 
+## Installation Guide for WSL (Ubuntu)
+
+This guide provides step-by-step instructions for building VegaFEM in a WSL (Windows Subsystem for Linux) environment.
+
+### Step 1: Prepare WSL Environment and Dependencies
+
+First, ensure you have WSL installed (typically Ubuntu). Open your WSL terminal and execute the following commands to update the system and install necessary compilers and graphics libraries.
+
+VegaFEM depends on C/C++ compilers, OpenGL utility libraries (GLUT/GLUI), and linear algebra libraries (BLAS/LAPACK).
+
+Update package sources:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+Install core dependencies:
+
+```bash
+sudo apt install -y build-essential git cmake wget unzip \
+freeglut3-dev libxi-dev libxmu-dev \
+liblapack-dev libblas-dev \
+libglew-dev
+```
+
+- `build-essential`: Installs GCC/G++ compilers
+- `freeglut3-dev`: OpenGL utilities required for VegaFEM graphics interface
+- `liblapack-dev` / `libblas-dev`: Numerical computing libraries (VegaFEM can also use Intel MKL, but system BLAS/LAPACK is simplest and least error-prone)
+
+### Step 2: Install Additional Dependencies
+
+Install wxWidgets (required for some utilities):
+
+```bash
+sudo apt install -y libwxgtk3.0-gtk3-dev
+```
+
+Install GLU (OpenGL Utility Library):
+
+```bash
+sudo apt install -y libglu1-mesa-dev
+```
+
+### Step 3: Install vcpkg
+
+vcpkg is used to manage additional dependencies like arpackng and glui.
+
+```bash
+cd ~
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg integrate install
+```
+
+### Step 4: Install Dependencies via vcpkg
+
+Install arpackng and glui:
+
+```bash
+./vcpkg install arpackng glui
+```
+
+### Step 5: Install Intel oneAPI MKL
+
+Download and install Intel oneAPI Base Toolkit which includes MKL:
+
+```bash
+wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+sudo apt update
+sudo apt install -y intel-oneapi-mkl-devel
+```
+
+Set up environment variables (add to your `~/.bashrc` for persistence):
+
+```bash
+source /opt/intel/oneapi/setvars.sh
+```
+
+### Step 6: Clone and Build VegaFEM
+
+Clone the repository:
+
+```bash
+cd ~
+git clone https://github.com/FabienPean/VegaFEM.git
+cd VegaFEM
+```
+
+Create a build directory and configure CMake:
+
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_PREFIX_PATH="/opt/intel/oneapi/mkl/latest;/root/vcpkg/installed/x64-linux" -DVEGAFEM_BUILD_COPYLEFT=OFF
+```
+
+Note: Adjust the MKL path if your version is different (check `/opt/intel/oneapi/mkl/` for the actual version number).
+
+### Step 7: Build the Project
+
+Build with multiple cores:
+
+```bash
+make -j$(nproc)
+```
+
+The build process will compile the VegaFEM library and all utilities. Once complete, you can find the executables in the `build/utilities/` directory.
+
+### Step 8: Verify Installation
+
+Test a simple utility to verify the installation:
+
+```bash
+cd utilities
+./displayObj --help
+```
+
+If the command executes without errors, your installation is successful!
+
+## Troubleshooting
+
+This section documents common errors encountered during the build process and their solutions, based on actual build experience.
+
+### Error 1: Could not find MKL package
+
+**Error Message:**
+```
+Could not find MKL package
+```
+
+**Solution:**
+Ensure Intel MKL is installed and specify the correct path in CMake:
+```bash
+# Check MKL installation
+ls /opt/intel/oneapi/mkl/
+
+# Use the actual version number in CMake
+cmake .. -DCMAKE_PREFIX_PATH="/opt/intel/oneapi/mkl/2025.3;/root/vcpkg/installed/x64-linux" -DVEGAFEM_BUILD_COPYLEFT=OFF
+```
+
+### Error 2: Could not find arpackng package
+
+**Error Message:**
+```
+Could not find arpackng package
+```
+
+**Solution:**
+Install arpackng via vcpkg:
+```bash
+cd ~/vcpkg
+./vcpkg install arpackng
+```
+
+### Error 3: Could not find glui package
+
+**Error Message:**
+```
+Could not find glui package
+```
+
+**Solution:**
+Install glui via vcpkg:
+```bash
+cd ~/vcpkg
+./vcpkg install glui
+```
+
+### Error 4: Could not find wxWidgets package
+
+**Error Message:**
+```
+Could not find wxWidgets package
+```
+
+**Solution:**
+Install wxWidgets development libraries:
+```bash
+sudo apt install -y libwxgtk3.0-gtk3-dev
+```
+
+### Error 5: Target links to target not in any export set
+
+**Error Message:**
+```
+Target 'vegafem' links to target 'igl_core' that is not in any export set
+```
+
+**Solution:**
+Disable copyleft components in CMake configuration:
+```bash
+cmake .. -DVEGAFEM_BUILD_COPYLEFT=OFF
+```
+
+### Error 6: Undefined reference to GLU functions
+
+**Error Message:**
+```
+undefined reference to `gluPerspective'
+undefined reference to `gluOrtho2D'
+undefined reference to `gluUnProject'
+undefined reference to `gluLookAt'
+undefined reference to `gluBuild2DMipmaps'
+undefined reference to `gluErrorString'
+```
+
+**Solution:**
+This error occurs because GLU is not properly linked. The CMakeLists.txt files need to be modified to use `OPENGL_glu_LIBRARY` instead of `GLU_LIBRARIES`.
+
+In `CMakeLists.txt`, change:
+```cmake
+find_package(GLU REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GLU_LIBRARIES})
+```
+To:
+```cmake
+find_package(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL ${OPENGL_glu_LIBRARY})
+```
+
+In `utilities/CMakeLists.txt`, add GLU to the target_link_libraries:
+```cmake
+target_link_libraries(${exe} PRIVATE ${PROJECT_NAME} 
+    OpenGL::GL 
+    GLUT::GLUT
+    ${OPENGL_glu_LIBRARY}
+    $<$<PLATFORM_ID:Linux,Darwin>:X11::X11>
+)
+```
+
+### Error 7: GLU not found by CMake
+
+**Error Message:**
+```
+GLU not found
+```
+
+**Solution:**
+Install GLU development libraries:
+```bash
+sudo apt install -y libglu1-mesa-dev
+```
+
+### General Tips
+
+- Always verify that all dependencies are installed before running CMake configuration
+- Check the actual version numbers in `/opt/intel/oneapi/mkl/` and adjust paths accordingly
+- Use `make -j$(nproc)` for parallel builds to speed up compilation
+- If you encounter linker errors, check that all required libraries are properly linked in CMakeLists.txt
+
 ## License
 
 The library itself is released under the BSD 3-clause. 

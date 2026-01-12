@@ -157,10 +157,12 @@ if(VEGAFEM_BUILD_UTILITIES_GRAPHICS)
     target_link_libraries(${exe} PRIVATE ${PROJECT_NAME} 
         OpenGL::GL 
         GLUT::GLUT
+        ${OPENGL_glu_LIBRARY}
         $<$<PLATFORM_ID:Linux,Darwin>:X11::X11>
     )
-    find_package(wxWidgets CONFIG REQUIRED)
-    target_link_libraries(largeModalDeformationFactory PRIVATE wx::core wx::base wx::gl)
+    find_package(wxWidgets REQUIRED COMPONENTS core base gl)
+    include(${wxWidgets_USE_FILE})
+    target_link_libraries(largeModalDeformationFactory PRIVATE ${wxWidgets_LIBRARIES})
 
     # DLL copy to install folder must be wrapped because generator expression
     # TARGET_RUNTIME_DLLS ""On non-DLL platforms, this expression always evaluates to an empty string""

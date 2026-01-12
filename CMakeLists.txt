@@ -14,7 +14,7 @@ project(
   LANGUAGES C CXX
 )
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
-option(VEGAFEM_BUILD_COPYLEFT "build copyleft licensed libraries" ON)
+option(VEGAFEM_BUILD_COPYLEFT "build copyleft licensed libraries" OFF)
 option(VEGAFEM_BUILD_UTILITIES "build utilities applications" ON)
 option(VEGAFEM_BUILD_UTILITIES_GRAPHICS "build utilities applications requiring a graphics API" ON)
 
@@ -63,7 +63,7 @@ target_include_directories(${PROJECT_NAME}
 
 ### OpenGL
 find_package(OpenGL REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL)
+target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL ${OPENGL_glu_LIBRARY})
 find_package(GLUT REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC GLUT::GLUT)
 find_package(GLEW REQUIRED)
@@ -173,7 +173,7 @@ list(FILTER all_sources EXCLUDE REGEX ".*matrixBLAS[^\\.].*")                   
 
 target_sources(${PROJECT_NAME} PRIVATE ${all_headers} PRIVATE ${all_sources})
 install(FILES ${all_headers} DESTINATION "include/${PROJECT_NAME}")
-file(COPY ${all_headers} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}") # For uniform consumption in build/install-tree
+file(COPY ${all_headers} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}") # For uniform consumption in build/install-tree)
 
 if(VEGAFEM_BUILD_COPYLEFT)
 ################################################################################
@@ -206,7 +206,7 @@ FetchContent_MakeAvailable(libigl)
 # The following targets are only set in the build interface because
 # 1) they are private, so nothing links against it
 # 2) they would require to be exported along in the install set
-target_link_libraries(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:Eigen3::Eigen igl::core igl::predicates igl_copyleft::cgal>)
+target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen igl::core igl::predicates igl_copyleft::cgal)
 target_link_libraries(${PROJECT_NAME} PUBLIC CGAL::CGAL)# er.h:#include<CGAL/Exact_predicates_exact_constructions_kernel.h>
 
 if(MSVC OR "${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" MATCHES MSVC)
@@ -275,6 +275,7 @@ install(EXPORT ${PROJECT_NAME}Targets
         FILE ${PROJECT_NAME}Targets.cmake
         NAMESPACE vegafem::
         DESTINATION lib/cmake/vegafem
+        EXPORT_LINK_INTERFACE_LIBRARIES
 )
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
