@@ -79,65 +79,75 @@ set(MKL_INTERFACE lp64)         # lp64 ilp64 https://en.wikipedia.org/wiki/64-bi
 set(MKL_THREADING sequential)   # intel_thread gnu_thread pgi_thread tbb_thread sequential
 set(MKL_LINK static)            # static dynamic sdl # Must be static otherwise largeModalDeformationFactory fails on calculating linear modes
 set(MKL_MPI intelmpi)           # intelmpi, mpich, openmpi, msmpi, mshpc
-find_package(MKL CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE MKL::MKL)
-target_compile_definitions(${PROJECT_NAME} PUBLIC PARDISO_SOLVER_IS_AVAILABLE)
+find_package(MKL CONFIG)
+if(MKL_FOUND)
+  target_link_libraries(${PROJECT_NAME} PRIVATE MKL::MKL)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC PARDISO_SOLVER_IS_AVAILABLE)
+endif()
 ### ARPACK
-find_package(arpackng CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE ARPACK::ARPACK)
+find_package(arpackng CONFIG)
+if(arpackng_FOUND)
+  target_link_libraries(${PROJECT_NAME} PRIVATE ARPACK::ARPACK)
+endif()
 
 set(VegaFEM_core_libs
-    animationHelper
-    basicAlgorithms
-    camera
-    clothBW
-    configFile
-    constrainedDOFs
-    corotationalLinearFEM
-    distanceField
-    elasticForceModel
-    forceModel
-    getopts
-    glslPhong
-    graph
-    hashTable
-    imageIO
+    core/math/minivector
+    core/math/matrix
+    core/math/sparseMatrix
+    core/math/quaternion
+    core/math/polarDecomposition
+    core/data_structures/hashTable
+    core/data_structures/graph
+    core/data_structures/listIO
+    core/io/matrixIO
+    core/io/imageIO
+    core/io/configFile
+    core/io/getopts
+    mesh/geometry
+    mesh/triMesh
+    mesh/tetMesh
+    mesh/spatial
+    mesh/predicates
+    mesh/operations
+    mesh/windingNumber
+    mesh/objMesh
+    mesh/volumetricMesh
+    mesh/generation/mesher
+    mesh/generation/distanceField
+    mesh/processing/shapeEdit
+    mesh/processing/interpolationCoordinates
+    physics/force_models/forceModel
+    physics/force_models/elasticForceModel
+    physics/force_models/reducedElasticForceModel
+    physics/force_models/stencilForceModel
+    physics/integrators/integrator
+    physics/integrators/integratorDense
+    physics/integrators/integratorSparse
+    physics/solvers/sparseSolver
+    physics/systems/massSpringSystem
+    physics/systems/corotationalLinearFEM
+    physics/systems/isotropicHyperelasticFEM
+    physics/systems/stvk
+    physics/systems/reducedStvk
+    physics/systems/reducedForceModel
+    rendering/graphics/openGLHelper
+    rendering/graphics/glslPhong
+    rendering/graphics/lighting
+    rendering/graphics/camera
+    rendering/scene/sceneObject
+    rendering/scene/sceneObjectReduced
+    rendering/scene/renderVolumetricMesh
+    rendering/deformers/objMeshGPUDeformer
+    utilities/performance/performanceCounter
+    utilities/math/basicAlgorithms
+    utilities/math/laplacianMatrix
+    utilities/math/modalMatrix
+    utilities/constraints/constrainedDOFs
+    utilities/rigid_body/rigidBodyDynamics
+    utilities/cloth/clothBW
+    utilities/animation/animationHelper
     include
-    integrator
-    integratorDense
-    integratorSparse
-    interpolationCoordinates
-    isotropicHyperelasticFEM
-    laplacianMatrix
-    lighting
-    listIO
-    macros
-    massSpringSystem
-    matrix
-    matrixIO
-    mesh
-    mesher
-    minivector
-    modalMatrix
-    objMesh
-    objMeshGPUDeformer
-    openGLHelper
-    performanceCounter
-    polarDecomposition
-    quaternion
-    reducedElasticForceModel
-    reducedForceModel
-    reducedStvk
-    renderVolumetricMesh
-    rigidBodyDynamics
-    sceneObject
-    sceneObjectReduced
-    shapeEdit
-    sparseMatrix
-    sparseSolver
-    stencilForceModel
-    stvk
-    volumetricMesh
+    private
     windingNumber
 )
 
@@ -219,10 +229,10 @@ else()
 endif()
 
 set(${PROJECT_NAME}_gpl_libs
-    exactArithmetic
-    immersionMesher
-    libiglInterface
-    virtualTets
+    third_party/exactArithmetic
+    third_party/immersionMesher
+    third_party/libiglInterface
+    third_party/virtualTets
 )
 
 set(all_headers)
