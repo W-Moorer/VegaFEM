@@ -25,6 +25,52 @@ If you just need the utilities, the simplest is to download the binaries in the 
 * As well as the following dependencies: `intel-mkl opengl glui glew cgal openblas eigen3` which can be obtained via [vcpkg](https://vcpkg.io/en/index.html)
 * CMake 3.21
 
+## Project Structure
+
+The VegaFEM library has been reorganized into a functional domain-based structure for better maintainability and clarity:
+
+```
+libraries/
+├── core/                    # Core functionality
+│   ├── containers/          # Container classes and data structures
+│   ├── io/                  # Input/output operations
+│   └── math/                # Mathematical utilities
+├── mesh/                    # Mesh processing and operations
+│   ├── geometry/            # Geometric primitives (BoundingBox, Plane, Sphere)
+│   ├── triMesh/             # Triangular mesh operations
+│   ├── tetMesh/             # Tetrahedral mesh operations
+│   ├── spatial/             # Spatial data structures (Octree, EdgeKey)
+│   ├── predicates/          # Geometric predicates
+│   ├── operations/          # Mesh operations (intersection, query)
+│   ├── windingNumber/       # Winding number computation
+│   ├── objMesh/             # OBJ mesh format support
+│   ├── volumetricMesh/      # Volumetric mesh implementations
+│   ├── generation/          # Mesh generation tools
+│   │   ├── mesher/          # Tetrahedral and isosurface meshers
+│   │   └── distanceField/   # Distance field computation
+│   └── processing/          # Mesh processing tools
+│       ├── shapeEdit/       # Shape editing (ARAP deformation)
+│       └── interpolationCoordinates/  # Interpolation schemes
+├── physics/                 # Physics simulation engine
+│   ├── force_models/        # Force models (elastic, reduced, stencil)
+│   ├── integrators/         # Time integration schemes
+│   ├── solvers/             # Linear solvers
+│   └── systems/             # Physical systems
+├── rendering/               # Rendering utilities
+├── utilities/               # General utilities
+├── third_party/             # Third-party libraries
+├── windingNumber/           # Standalone winding number library
+├── include/                 # Public header files
+└── private/                 # Private implementation details
+```
+
+### Key Components
+
+- **Mesh Module**: Comprehensive mesh processing library supporting triangular and tetrahedral meshes, with tools for generation, manipulation, and geometric queries.
+- **Physics Module**: Physics simulation engine supporting various force models, integration schemes, and linear solvers for deformable object simulation.
+- **Core Module**: Fundamental data structures, mathematical utilities, and I/O operations used throughout the library.
+- **Rendering Module**: OpenGL-based rendering utilities for visualization and interactive simulation.
+
 ## Installation Guide for WSL (Ubuntu)
 
 This guide provides step-by-step instructions for building VegaFEM in a WSL (Windows Subsystem for Linux) environment.
